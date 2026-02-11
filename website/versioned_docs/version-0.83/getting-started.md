@@ -1,49 +1,166 @@
----
-id: environment-setup
-title: Get Started with React Native
-hide_table_of_contents: true
----
+npx expo init MyTranslator
+cd MyTranslator
+npm install @react-navigation/native @react-navigation/bottom-tabs react-native-paper
+npx expo startimport React, { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import TranslateScreen from './screens/TranslateScreen';
+import FavoritesScreen from './screens/FavoritesScreen';
+import HistoryScreen from './screens/HistoryScreen';
+import { Provider as PaperProvider } from 'react-native-paper';
 
-import PlatformSupport from '@site/src/theme/PlatformSupport';
-import BoxLink from '@site/src/theme/BoxLink';
+const Tab = createBottomTabNavigator();
 
-**React Native allows developers who know React to create native apps.** At the same time, native developers can use React Native to gain parity between native platforms by writing common features once.
+export default function App() {
+  const [favorites, setFavorites] = useState([]);
+  const [history, setHistory] = useState([]);
 
-We believe that the best way to experience React Native is through a **Framework**, a toolbox with all the necessary APIs to let you build production ready apps.
+  return (
+    <PaperProvider>
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Tab.Screen name="Translate">
+            {props => (
+              <TranslateScreen
+                {...props}
+                favorites={favorites}
+                setFavorites={setFavorites}
+                history={history}
+                setHistory={setHistory}
+              />
+            )}
+          </Tab.Screen>
+          <Tab.Screen name="Favorites">
+            {props => <FavoritesScreen {...props} favorites={favorites} />}
+          </Tab.Screen>
+          <Tab.Screen name="History">
+            {props => <HistoryScreen {...props} history={history} />}
+          </Tab.Screen>
+        </Tab.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
+  );
+}import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Card, Button } from 'react-native-paper';
 
-You can also use React Native without a Framework, however we’ve found that most developers benefit from using a React Native Framework like [Expo](https://expo.dev). Expo provides features like file-based routing, high-quality universal libraries, and the ability to write plugins that modify native code without having to manage native files.
+export default function TranslateScreen({ favorites, setFavorites, history, setHistory }) {
+  const [text, setText] = useState('');
+  const [translated, setTranslated] = useState('');
+  const [fromLang, setFromLang] = useState('English');
+  const [toLang, setToLang] = useState('Spanish');
 
-<details>
-<summary>Can I use React Native without a Framework?</summary>
+  const translateText = () => {
+    // Mock translation
+    const result = `${text} in ${toLang}`;
+    setTranslated(result);
 
-Yes. You can use React Native without a Framework. **However, if you’re building a new app with React Native, we recommend using a Framework.**
+    // Add to history
+    setHistory([{ text, translated: result, timestamp: new Date() }, ...history]);
+  };
 
-In short, you’ll be able to spend time writing your app instead of writing an entire Framework yourself in addition to your app.
+  const saveFavorite = () => {
+    setFavorites([{ text, translated, fromLang, toLang }, ...favorites]);
+  };
 
-The React Native community has spent years refining approaches to navigation, accessing native APIs, dealing with native dependencies, and more. Most apps need these core features. A React Native Framework provides them from the start of your app.
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.label}>Enter text:</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Type something..."
+        value={text}
+        onChangeText={setText}
+      />
 
-Without a Framework, you’ll either have to write your own solutions to implement core features, or you’ll have to piece together a collection of pre-existing libraries to create a skeleton of a Framework. This takes real work, both when starting your app, then later when maintaining it.
+      <Text style={styles.label}>From:</Text>
+      <TextInput style={styles.input} value={fromLang} onChangeText={setFromLang} />
 
-If your app has unusual constraints that are not served well by a Framework, or you prefer to solve these problems yourself, you can make a React Native app without a Framework using Android Studio, Xcode. If you’re interested in this path, learn how to [set up your environment](set-up-your-environment) and how to [get started without a framework](getting-started-without-a-framework).
+      <Text style={styles.label}>To:</Text>
+      <TextInput style={styles.input} value={toLang} onChangeText={setToLang} />
 
-</details>
+      <Button mode="contained" onPress={translateText} style={styles.button}>
+        Translate
+      </Button>
 
-## Start a new React Native project with Expo
+      {translated ? (
+        <Card style={styles.card}>
+          <Text style={styles.result}>{translated}</Text>
+          <Button mode="outlined" onPress={saveFavorite}>
+            Save to Favorites
+          </Button>
+        </Card>
+      ) : null}
+    </ScrollView>
+  );
+}
 
-<PlatformSupport platforms={['android', 'ios', 'tv', 'web']} />
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: '#FFFFFF' },
+  label: { fontSize: 16, marginTop: 12, color: '#1F2937' },
+  input: {
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 6,
+    marginBottom: 12,
+  },
+  button: { marginVertical: 12, backgroundColor: '#3B82F6' },
+  card: { padding: 16, borderRadius: 12, backgroundColor: '#F8FAFC', marginTop: 12 },
+  result: { fontSize: 16, color: '#1F2937', marginBottom: 8 },
+});import React from 'react';
+import { ScrollView, Text, StyleSheet } from 'react-native';
+import { Card } from 'react-native-paper';
 
-Expo is a production-grade React Native Framework. Expo provides developer tooling that makes developing apps easier, such as file-based routing, a standard library of native modules, and much more.
+export default function FavoritesScreen({ favorites }) {
+  return (
+    <ScrollView style={styles.container}>
+      {favorites.length === 0 && <Text>No favorites yet.</Text>}
+      {favorites.map((item, index) => (
+        <Card style={styles.card} key={index}>
+          <Text style={styles.text}>
+            {item.text} → {item.translated} ({item.fromLang} → {item.toLang})
+          </Text>
+        </Card>
+      ))}
+    </ScrollView>
+  );
+}
 
-Expo's Framework is free and open source, with an active community on [GitHub](https://github.com/expo) and [Discord](https://chat.expo.dev). The Expo team works in close collaboration with the React Native team at Meta to bring the latest React Native features to the Expo SDK.
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: '#FFFFFF' },
+  card: { padding: 12, marginBottom: 8, borderRadius: 12, backgroundColor: '#F8FAFC' },
+  text: { fontSize: 16, color: '#1F2937' },
+});import React from 'react';
+import { ScrollView, Text, StyleSheet } from 'react-native';
+import { Card } from 'react-native-paper';
 
-The team at Expo also provides Expo Application Services (EAS), an optional set of services that complements Expo, the Framework, in each step of the development process.
+export default function HistoryScreen({ history }) {
+  return (
+    <ScrollView style={styles.container}>
+      {history.length === 0 && <Text>No history yet.</Text>}
+      {history.map((item, index) => (
+        <Card style={styles.card} key={index}>
+          <Text style={styles.text}>
+            {item.text} → {item.translated}
+          </Text>
+          <Text style={styles.timestamp}>
+            {item.timestamp.toLocaleString()}
+          </Text>
+        </Card>
+      ))}
+    </ScrollView>
+  );
+}
 
-To create a new Expo project, run the following in your terminal:
-
-```shell
-npx create-expo-app@latest
-```
-
-Once you’ve created your app, check out the rest of Expo’s getting started guide to start developing your app.
-
-<BoxLink href="https://docs.expo.dev/get-started/set-up-your-environment">Continue with Expo</BoxLink>
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: '#FFFFFF' },
+  card: { padding: 12, marginBottom: 8, borderRadius: 12, backgroundColor: '#F8FAFC' },
+  text: { fontSize: 16, color: '#1F2937' },
+  timestamp: { fontSize: 12, color: '#6B7280', marginTop: 4 },
+})
